@@ -1,5 +1,6 @@
 package com.nanmu.gallery;
 
+import android.app.ActionBar;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Html;
@@ -15,6 +16,7 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
@@ -46,6 +48,7 @@ class MyAdapter extends ListAdapter<PhotoItem, MyAdapter.MyViewHolder> {
     static class MyViewHolder extends RecyclerView.ViewHolder {
         ShimmerLayout shimmerLayout;
         ImageView imageView;
+
         MyViewHolder(@NonNull View itemView) {
             super(itemView);
             shimmerLayout = itemView.findViewById(R.id.shimmerLayout);
@@ -53,28 +56,53 @@ class MyAdapter extends ListAdapter<PhotoItem, MyAdapter.MyViewHolder> {
         }
     }
 
+    static final int VIEW_TIPE_NORMAL = 0;
+    static final int VIEW_TIPE_BOTTOM = 1;
+
+    @Override
+    public int getItemCount() {
+        return super.getItemCount() + 1;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return position == getItemCount() - 1 ? VIEW_TIPE_BOTTOM : VIEW_TIPE_NORMAL;
+    }
+
     @NonNull
     @Override
     public MyViewHolder onCreateViewHolder(@NonNull final ViewGroup parent, int viewType) {
+        final MyViewHolder myViewHolder;
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        final View itemView = inflater.inflate(R.layout.item_photo, parent, false);
-        final MyViewHolder myViewHolder = new MyViewHolder(itemView);
-        myViewHolder.imageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // 这里得到了当前显示内容的PhotoItem对象
-                PhotoItem photoItem = getItem(myViewHolder.getAdapterPosition());
-                Bundle bundle = new Bundle();
-                bundle.putParcelable("data",photoItem);
-                NavController navController = Navigation.findNavController(itemView);
-                navController.navigate(R.id.action_galleryFragment_to_photoFragment, bundle);
-            }
-        });
+        if (viewType == VIEW_TIPE_NORMAL) {
+            final View itemView = inflater.inflate(R.layout.item_photo, parent, false);
+            myViewHolder = new MyViewHolder(itemView);
+            myViewHolder.imageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // 这里得到了当前显示内容的PhotoItem对象
+                    PhotoItem photoItem = getItem(myViewHolder.getAdapterPosition());
+                    Bundle bundle = new Bundle();
+                    bundle.putParcelable("data", photoItem);
+                    NavController navController = Navigation.findNavController(itemView);
+                    navController.navigate(R.id.action_galleryFragment_to_photoFragment, bundle);
+                }
+            });
+        } else {
+            final View itemView = inflater.inflate(R.layout.footer, parent, false);
+            StaggeredGridLayoutManager.LayoutParams layoutParams = new StaggeredGridLayoutManager.LayoutParams(StaggeredGridLayoutManager.LayoutParams.MATCH_PARENT,StaggeredGridLayoutManager.LayoutParams.WRAP_CONTENT);
+            layoutParams.setFullSpan(true);
+            itemView.setLayoutParams(layoutParams);
+             myViewHolder = new MyViewHolder(itemView);
+        }
         return myViewHolder;
     }
 
     @Override
     public void onBindViewHolder(@NonNull final MyViewHolder holder, int position) {
+        if (getItemCount() - 1 == position) {
+            return;
+        }
         holder.shimmerLayout.setShimmerColor(0x55ffffff);
         holder.shimmerLayout.setShimmerAngle(0);
         holder.shimmerLayout.startShimmerAnimation();
